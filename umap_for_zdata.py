@@ -66,10 +66,10 @@ df = pd.DataFrame(z_umap, index=z_autoencoder.index, columns=col_name)
 # [328, 232, 58, 1869, 66, 454, 279, 830, 573, 657, 453, 181, 88, 27, 453, 285, 459, 354, 116, 472, 44, 305]
 each_label_data_num = z_autoencoder.index.value_counts(sort=False).values.tolist() # sortすると降順になってしまう
 
+
 #sc = SpectralClustering(n_clusters=26, random_state=random_state, gamma=2.0, assign_labels="kmeans", affinity="rbf").fit(z_umap)
 #sc = SpectralClustering(n_clusters=26, random_state=random_state, assign_labels="kmeans", affinity="nearest_neighbors", n_neighbors=7).fit(z_umap)
 sc = SpectralClustering(n_clusters=26, random_state=random_state, assign_labels="kmeans", affinity="precomputed").fit(calc_selfturining_affinity(z_umap, neighbor_num=15))
-
 
 # default表示
 fig = px.scatter_3d(df, x=col_name[0], y=col_name[1], z=col_name[2], color=df.index)
