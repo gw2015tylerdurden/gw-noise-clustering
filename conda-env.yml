@@ -152,4 +152,4 @@ dependencies:
   - zstd=1.5.2=ha4553b6_0
   - pip:
       - markupsafe==2.1.2
-prefix: /home/tyler/anaconda3/envs/gwnc
+prefix: ~/anaconda3/envs/gwnc
