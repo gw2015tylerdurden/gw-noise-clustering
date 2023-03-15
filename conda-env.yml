@@ -1,8 +1,8 @@
 name: gwnc
 channels:
   - plotly
-  - anaconda
   - conda-forge
+  - anaconda
   - defaults
 dependencies:
   - _libgcc_mutex=0.1=main
@@ -151,5 +151,12 @@ dependencies:
   - zlib=1.2.13=h5eee18b_0
   - zstd=1.5.2=ha4553b6_0
   - pip:
+      - backports-zoneinfo==0.2.1
+      - cffi==1.15.1
       - markupsafe==2.1.2
+      - pycparser==2.21
+      - pytz-deprecation-shim==0.1.0.post0
+      - rpy2==3.5.10
+      - tzdata==2022.7
+      - tzlocal==4.2
 prefix: ~/anaconda3/envs/gwnc
