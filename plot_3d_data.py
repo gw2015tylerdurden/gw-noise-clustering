@@ -10,14 +10,6 @@ from dash import dcc, html
 from dash.dependencies import Input, Output
 from PIL import Image
 from sklearn.cluster import SpectralClustering
-import rpy2.robjects.packages as rpackages
-import rpy2.robjects as robjects
-from rpy2.robjects import numpy2ri
-
-# 初回実行時のみTrueにしてインストールする
-if True:
-    utils = rpackages.importr('utils')
-    utils.install_packages('mclust')
 
 def numpyTob64FmtPng(array):
     im_pil = Image.fromarray(array)
@@ -30,30 +22,6 @@ def getGravitySpyDatasetIndex(hoverData):
     label = hoverData['points'][0]['curveNumber']
     num = hoverData['points'][0]['pointNumber']
     return sum(each_label_data_num[:label]) + num
-
-def calc_selfturining_affinity(X, neighbor_num=7):
-    """Computes affinity matrix using self-turining method.
-    Read more in the :ref:`https://proceedings.neurips.cc/paper/2004/file/40173ea48d9567f1f393b20c855bb40b-Paper.pdf`.
-
-    Exsample code:
-    # original
-    sc = SpectralClustering(n_clusters=2, assign_labels="kmeans", affinity="rbf").fit(X)
-
-    # self-turning
-    sc = SpectralClustering(n_clusters=2, assign_labels="kmeans", affinity="precomputed").fit(calc_selfturining_affinity(X))
-    """
-    from sklearn.neighbors import NearestNeighbors
-    from sklearn.metrics import euclidean_distances
-
-    K = euclidean_distances(X, X, squared=True)
-
-    # local scaling
-    nn = NearestNeighbors(n_neighbors=neighbor_num + 1).fit(X)  # +1はターゲットのデータ分
-    dist, indices = nn.kneighbors(X)
-    sigmas = dist[:, -1]  # -1によりターゲットとneighbor_num番目間との距離を取得する
-    K = -1.0 * K / np.outer(sigmas, sigmas)
-    affinity = np.exp(K)  # exponentiate K in-place
-    return affinity
 
 random_state = 256
 
@@ -73,19 +41,7 @@ df = pd.DataFrame(z_umap, index=z_autoencoder.index, columns=col_name)
 # [328, 232, 58, 1869, 66, 454, 279, 830, 573, 657, 453, 181, 88, 27, 453, 285, 459, 354, 116, 472, 44, 305]
 each_label_data_num = z_autoencoder.index.value_counts(sort=False).values.tolist() # sortすると降順になってしまう
 
-#sc = SpectralClustering(n_clusters=26, random_state=random_state, gamma=2.0, assign_labels="kmeans", affinity="rbf").fit(z_umap)
-#sc = SpectralClustering(n_clusters=26, random_state=random_state, assign_labels="kmeans", affinity="nearest_neighbors", n_neighbors=7).fit(z_umap)
-sc = SpectralClustering(n_clusters=26, random_state=random_state, assign_labels="kmeans", affinity="precomputed").fit(calc_selfturining_affinity(z_umap, neighbor_num=15))
-
-# classification_error関数を呼び出す
-mclust = rpackages.importr('mclust')
-classification_error = robjects.r('classError')
-
-rlabel_indies = numpy2ri.py2rpy(label_indies.values)
-rsc_labels = numpy2ri.py2rpy(sc.labels_)
-res = classification_error(rlabel_indies, rsc_labels)
-error_rate = res.rx2('errorRate')[0]
-print(res)
+sc = SpectralClustering(n_clusters=26, random_state=random_state, assign_labels="kmeans", affinity="nearest_neighbors", n_neighbors=7).fit(z_umap)
 
 # default表示
 fig = px.scatter_3d(df, x=col_name[0], y=col_name[1], z=col_name[2], color=df.index)
