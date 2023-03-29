@@ -1,0 +1,30 @@
+hydra:
+  run:
+    dir: outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
+
+gravity_spy_path: ~/workspace/gw-noise-clustering/data/gravity_spy_labels.csv
+dataset_path: ~/workspace/gw-noise-clustering/data/z-autoencoder-outputs.csv
+
+verbose: True
+
+labels: [1080Lines, 1400Ripples, Air_Compressor, Blip,
+         Chirp, Extremely_Loud, Helix, Koi_Fish,
+         Light_Modulation, Low_Frequency_Burst, Low_Frequency_Lines, No_Glitch,
+         None_of_the_Above, Paired_Doves, Power_Line, Repeating_Blips,
+         Scattered_Light, Scratchy, Tomte, Violin_Mode,
+         Wandering_Line, Whistle]
+
+random_state: 123
+umap:
+  n_components: 3
+  n_neighbors: 15
+  min_dist: 0.5
+
+sc:
+  n_clusters: (22,30)
+
+wandb:
+  project: gw-noise-clustering
+  group: clustering-stability
+  name: clustering-stability
+  cwd: current_work_directory
