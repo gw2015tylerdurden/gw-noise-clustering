@@ -2,6 +2,7 @@ import hydra
 import numpy as np
 import pandas as pd
 import umap
+import src.fpc as fpc
 from sklearn.cluster import SpectralClustering
 import rpy2.robjects.packages as rpackages
 import rpy2.robjects as robjects
@@ -26,10 +27,16 @@ class WandbLogging:
                 items.append((new_key, v))
         return dict(items)
     def update(self, **kwargs):
-        for key, value in kwargs.items():
-            self.stats[key].append(value)
+        wandb.log(dict(kwargs))
+
+    def log(self, **kwargs):
+        wandb.log(kwargs)
+
 
 def calc_classification_error(true, pred):
+    true = np.array(true)
+    pred = np.array(pred)
+
     mclust = rpackages.importr('mclust')
     classification_error = robjects.r('classError')
 
@@ -42,8 +49,9 @@ def calc_classification_error(true, pred):
 @hydra.main(config_path="config", config_name="parameters")
 def main(args):
     wdb = WandbLogging(args)
+    np.random.seed(args.random_state)
 
-    label_indies = pd.read_csv(args.gravity_spy_path, index_col=0, header=None)
+    gravity_spy_labels = pd.read_csv(args.gravity_spy_path, index_col=0, header=None)
     z_autoencoder = pd.read_csv(args.dataset_path, index_col=0)
 
     z_umap = umap.UMAP(n_components=args.umap.n_components,
@@ -51,25 +59,22 @@ def main(args):
                        min_dist=args.umap.min_dist,
                        random_state=args.random_state).fit_transform(z_autoencoder)
 
-    sc = SpectralClustering(n_clusters=26, random_state=args.random_state, assign_labels="kmeans", affinity="nearest_neighbors", n_neighbors=7).fit(z_umap)
+    ret = fpc.nselectboot(z_umap, B=args.bootstrap_num, krange=range(args.sc.n_start, args.sc.n_end), clustermethod="specc", count=True, gamma=args.sc.gamma)
 
+    error_rate = []
+    for k in range(args.sc.n_start,  args.sc.n_end + 1):
+        sc = SpectralClustering(n_clusters=k, random_state=args.random_state, gamma=args.sc.gamma).fit(z_umap)
+        error_rate.append(calc_classification_error(gravity_spy_labels, sc.labels_))
 
-    # classification_error関数を呼び出す
-    mclust = rpackages.importr('mclust')
-    classification_error = robjects.r('classError')
+    idx = 0
+    for i in range(args.sc.n_end + 1):
+        if i < args.sc.n_start:
+            wdb.update(mean_stabilities=float('nan'), std=float('nan'), error_rate=float('nan'))
+        else:
+            wdb.update(mean_stabilities=ret["stab_mean"][idx], std=ret["stab_std"][idx], error_rate=error_rate[idx])
+            idx += 1
+    #wandb.log({'optimal class' : ret["kopt"]})
 
-    rlabel_indies = numpy2ri.py2rpy(label_indies.values)
-    rsc_labels = numpy2ri.py2rpy(sc.labels_)
-    res = classification_error(rlabel_indies, rsc_labels)
-    error_rate = res.rx2('errorRate')[0]
-    wdb.update(error_rate)
-
-    # clustering stability
-    fpc = rpackages.importr('fpc')
-    nselectboot = robjects.r('nselectboot')
-    from rpy2.robjects.vectors import IntVector
-    nclusters = nselectboot(data=numpy2ri.py2rpy(z_umap), B=50, clustermethod=fpc.speccCBI, classification="averagedist", krange=IntVector(range(args.sc.n_clusters)), count=True)
-    print(nclusters)
 
 if __name__ == "__main__":
     main()

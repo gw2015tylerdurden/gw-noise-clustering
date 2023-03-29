@@ -21,7 +21,11 @@ umap:
   min_dist: 0.5
 
 sc:
-  n_clusters: (22,30)
+  n_start: 22
+  n_end : 30
+  gamma : 0.5
+
+bootstrap_num : 50
 
 wandb:
   project: gw-noise-clustering
