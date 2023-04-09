@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import umap
 import src.fpc as fpc
+from src.utils import calc_selfturining_affinity
 from sklearn.cluster import SpectralClustering
 import rpy2.robjects.packages as rpackages
 import rpy2.robjects as robjects
@@ -59,11 +60,15 @@ def main(args):
                        min_dist=args.umap.min_dist,
                        random_state=args.random_state).fit_transform(z_autoencoder)
 
-    ret = fpc.nselectboot(z_umap, B=args.bootstrap_num, krange=range(args.sc.n_start, args.sc.n_end), clustermethod="specc", count=True, gamma=args.sc.gamma)
+    cs = fpc.ClusteringStability(args.sc.is_self_turning, args.sc.self_turning_neighbor)
+    ret = cs.nselectboot(z_umap, B=args.bootstrap_num, krange=range(args.sc.n_start, args.sc.n_end), clustermethod="specc", count=True)
 
     error_rate = []
     for k in range(args.sc.n_start,  args.sc.n_end + 1):
-        sc = SpectralClustering(n_clusters=k, random_state=args.random_state, gamma=args.sc.gamma).fit(z_umap)
+        if args.sc.is_self_turning:
+            sc = SpectralClustering(n_clusters=k, random_state=args.random_state, affinity='precomputed').fit(calc_selfturining_affinity(z_umap, args.sc.self_turning_neighbor))
+        else:
+            sc = SpectralClustering(n_clusters=k, random_state=args.random_state, gamma=args.sc.gamma).fit(z_umap)
         error_rate.append(calc_classification_error(gravity_spy_labels, sc.labels_))
 
     idx = 0
