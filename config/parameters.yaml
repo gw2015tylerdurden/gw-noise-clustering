@@ -21,8 +21,8 @@ umap:
   min_dist: 0.5
 
 sc:
-  n_start: 15
-  n_end : 40
+  n_start: 10
+  n_end : 45
   gamma : 0.5
   is_self_turning : False
   self_turning_neighbor : 7

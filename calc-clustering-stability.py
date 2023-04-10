@@ -78,7 +78,8 @@ def main(args):
         else:
             wdb.update(mean_stabilities=ret["stab_mean"][idx], std=ret["stab_std"][idx], error_rate=error_rate[idx])
             idx += 1
-    #wandb.log({'optimal class' : ret["kopt"]})
+    # summary
+    wandb.log({'min mean stability' : min(ret["stab_mean"]),  'min error rate' : min(error_rate)})
 
 
 if __name__ == "__main__":
