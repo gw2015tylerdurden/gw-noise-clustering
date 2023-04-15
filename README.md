@@ -2,7 +2,7 @@
 
 # conda install
 ```
-conda env create -f=conda-env.yml
+conda env create -f=conda-env.yaml
 ```
 
 The default prefix is ~/anaconda3/envs/gwnc
