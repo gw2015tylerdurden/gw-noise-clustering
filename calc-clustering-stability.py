@@ -60,23 +60,16 @@ def main(args):
                        min_dist=args.umap.min_dist,
                        random_state=args.random_state).fit_transform(z_autoencoder)
 
-    cs = fpc.ClusteringStability(args.sc.is_self_turning, args.sc.self_turning_neighbor)
+    cs = fpc.SpeccClusteringInstability(args.sc.gamma)
     ret = cs.nselectboot(z_umap, B=args.bootstrap_num, krange=range(args.sc.n_start, args.sc.n_end), clustermethod="specc", count=True)
-
-    error_rate = []
-    for k in range(args.sc.n_start,  args.sc.n_end + 1):
-        if args.sc.is_self_turning:
-            sc = SpectralClustering(n_clusters=k, random_state=args.random_state, affinity='precomputed').fit(calc_selfturining_affinity(z_umap, args.sc.self_turning_neighbor))
-        else:
-            sc = SpectralClustering(n_clusters=k, random_state=args.random_state, gamma=args.sc.gamma).fit(z_umap)
-        error_rate.append(calc_classification_error(gravity_spy_labels, sc.labels_))
+    error_rate = cs.get_error_rate(z_umap, gravity_spy_labels, krange=range(args.sc.n_start, args.sc.n_end), seed=args.random_state)
 
     idx = 0
     for i in range(args.sc.n_end + 1):
         if i < args.sc.n_start:
-            wdb.update(mean_stabilities=float('nan'), std=float('nan'), error_rate=float('nan'))
+            wdb.update(mean_instabilities=float('nan'), std=float('nan'), error_rate=float('nan'))
         else:
-            wdb.update(mean_stabilities=ret["stab_mean"][idx], std=ret["stab_std"][idx], error_rate=error_rate[idx])
+            wdb.update(mean_instabilities=ret["stab_mean"][idx], std=ret["stab_std"][idx], error_rate=error_rate[idx])
             idx += 1
     # summary
     wandb.log({'min mean stability' : min(ret["stab_mean"]),  'min error rate' : min(error_rate)})
