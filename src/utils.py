@@ -1,6 +1,10 @@
 import numpy as np
 from sklearn.neighbors import NearestNeighbors
 from sklearn.metrics import euclidean_distances
+import rpy2.robjects.packages as rpackages
+import rpy2.robjects as robjects
+from rpy2.robjects import numpy2ri
+
 
 def calc_selfturining_affinity(X, neighbor_num=7, duplicate_sigma=1.0):
     """Computes affinity matrix using self-turining method.
