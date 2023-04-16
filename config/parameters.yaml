@@ -22,10 +22,11 @@ umap:
 
 sc:
   n_start: 10
-  n_end : 35
-  gamma : median-heuristic
+  n_end: 35
+  gamma: self-turning-neighbor:7
+  # gamma: median-heuristic
 
-bootstrap_num : 50
+bootstrap_num: 50
 
 wandb:
   project: gw-noise-clustering

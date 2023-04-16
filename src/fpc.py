@@ -1,4 +1,5 @@
 import numpy as np
+import random
 import pandas as pd
 from .utils import calc_selfturining_affinity, calc_classification_error
 from sklearn.cluster import KMeans, SpectralClustering
@@ -12,7 +13,7 @@ class SpeccClusteringInstability:
 
         if gamma == 'median-heuristic':
             self.is_median_heuristic = True
-        elif gamma.startswith('self-turning-neighbor:'):
+        elif gamma.startswith('self-turning-neighbor'):
             self.self_turning_neighbor = int(gamma.split(':')[1])
             self.is_self_turining = True
         elif type(gamma) in [int, float]:
@@ -20,6 +21,13 @@ class SpeccClusteringInstability:
         else:
             raise ValueError('Invalid gamma')
 
+    def __get_bootstrap_pair(self, data, n):
+            d1 = np.random.choice(n, n, replace=True)
+            d2 = np.random.choice(n, n, replace=True)
+
+            dmat1 = data.iloc[d1, :]
+            dmat2 = data.iloc[d2, :]
+            return dmat1, d1, dmat2, d2
 
     def __classifnp(self, data, clustering, method='centroid', cdist=None, centroids=None, nnk=1):
         data = np.array(data)
@@ -76,16 +84,22 @@ class SpeccClusteringInstability:
                 if count:
                     print(b)
 
-                d1 = np.random.choice(n, n, replace=True)
-                d2 = np.random.choice(n, n, replace=True)
-
-                dmat1 = data.iloc[d1, :]
-                dmat2 = data.iloc[d2, :]
+                dmat1, d1, dmat2, d2 = self.__get_bootstrap_pair(data, n)
 
                 if self.is_self_turining:
+                    while(True):
+                        X1, success1 = calc_selfturining_affinity(dmat1, self.self_turning_neighbor)
+                        X2, success2 = calc_selfturining_affinity(dmat2, self.self_turning_neighbor)
+                        if (success1 is True and success2 is True):
+                            break
+                        else:
+                            print(f"Sigma has detected 0 for k-neighbor (set as {self.self_turning_neighbor}). Regenerate bootstrap pairs by changing random seed.")
+                            np.random.seed(random.randint(0, 100000))
+                            dmat1, d1, dmat2, d2 = self.__get_bootstrap_pair(data, n)
+
                     kargs['affinity'] = 'precomputed'
-                    clm1 = model(n_clusters=k, **kargs).fit(calc_selfturining_affinity(dmat1), self.self_turning_neighbor)
-                    clm2 = model(n_clusters=k, **kargs).fit(calc_selfturining_affinity(dmat2), self.self_turning_neighbor)
+                    clm1 = model(n_clusters=k, **kargs).fit(X1)
+                    clm2 = model(n_clusters=k, **kargs).fit(X2)
                 elif self.is_median_heuristic:
                     kargs['gamma'] = self.get_medianheuristic_gamma(dmat1)
                     clm1 = model(n_clusters=k, **kargs).fit(dmat1)
