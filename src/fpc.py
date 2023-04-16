@@ -1,8 +1,12 @@
 import numpy as np
 import pandas as pd
-from .utils import calc_selfturining_affinity
+from .utils import calc_selfturining_affinity, calc_classification_error
 from sklearn.cluster import KMeans, SpectralClustering
 from scipy.spatial.distance import pdist, squareform
+import rpy2.robjects.packages as rpackages
+import rpy2.robjects as robjects
+from rpy2.robjects import numpy2ri
+
 
 class SpeccClusteringInstability:
     def __init__(self, gamma):

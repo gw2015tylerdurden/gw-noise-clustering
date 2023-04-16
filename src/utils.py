@@ -25,3 +25,17 @@ def calc_selfturining_affinity(X, neighbor_num=7, duplicate_sigma=1.0):
     K = -1.0 * K / np.outer(sigmas, sigmas)
     affinity = np.exp(K)  # exponentiate K in-place
     return affinity
+
+
+def calc_classification_error(true, pred):
+    true = np.array(true)
+    pred = np.array(pred)
+
+    mclust = rpackages.importr('mclust')
+    classification_error = robjects.r('classError')
+
+    rtrue = numpy2ri.py2rpy(true)
+    rpred = numpy2ri.py2rpy(pred)
+    res = classification_error(rtrue, rpred)
+    error_rate = res.rx2('errorRate')[0]
+    return error_rate

@@ -3,13 +3,9 @@ import numpy as np
 import pandas as pd
 import umap
 import src.fpc as fpc
-from src.utils import calc_selfturining_affinity
-from sklearn.cluster import SpectralClustering
-import rpy2.robjects.packages as rpackages
-import rpy2.robjects as robjects
-from rpy2.robjects import numpy2ri
 from collections import defaultdict, abc
 import wandb
+
 
 class WandbLogging:
     def __init__(self, args):
@@ -33,19 +29,6 @@ class WandbLogging:
     def log(self, **kwargs):
         wandb.log(kwargs)
 
-
-def calc_classification_error(true, pred):
-    true = np.array(true)
-    pred = np.array(pred)
-
-    mclust = rpackages.importr('mclust')
-    classification_error = robjects.r('classError')
-
-    rtrue = numpy2ri.py2rpy(true)
-    rpred = numpy2ri.py2rpy(pred)
-    res = classification_error(rtrue, rpred)
-    error_rate = res.rx2('errorRate')[0]
-    return error_rate
 
 @hydra.main(config_path="config", config_name="parameters")
 def main(args):
