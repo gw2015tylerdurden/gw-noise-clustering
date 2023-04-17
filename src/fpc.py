@@ -11,13 +11,13 @@ class SpeccClusteringInstability:
         self.is_self_turining = False
         self.is_median_heuristic = False
 
-        if gamma == 'median-heuristic':
+        if isinstance(gamma, float):
+            self.gamma = gamma
+        elif gamma == 'median-heuristic':
             self.is_median_heuristic = True
         elif gamma.startswith('self-turning-neighbor'):
             self.self_turning_neighbor = int(gamma.split(':')[1])
             self.is_self_turining = True
-        elif type(gamma) in [int, float]:
-            self.gamma = gamma
         else:
             raise ValueError('Invalid gamma')
 
