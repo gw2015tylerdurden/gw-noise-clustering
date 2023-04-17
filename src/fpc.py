@@ -146,7 +146,8 @@ class SpeccClusteringInstability:
         error_rate = []
         for k in classes:
             if self.is_self_turining:
-                sc = SpectralClustering(n_clusters=k, random_state=seed, affinity='precomputed').fit(calc_selfturining_affinity(data, self.self_turning_neighbor))
+                X, _ = calc_selfturining_affinity(data, self.self_turning_neighbor)
+                sc = SpectralClustering(n_clusters=k, random_state=seed, affinity='precomputed').fit(X)
             elif self.is_median_heuristic:
                 gamma = self.get_medianheuristic_gamma(data)
                 sc = SpectralClustering(n_clusters=k, random_state=seed, gamma=gamma).fit(data)
