@@ -24,6 +24,10 @@ def getGravitySpyDatasetIndex(hoverData):
     return sum(each_label_data_num[:label]) + num
 
 random_state = 256
+nclass = 17
+umap_neighbor = 15
+umap_min_dist = 0.5
+
 
 # datasetをpdDataFrameに格納
 dataset_path = './data/trainingset.h5'
@@ -31,7 +35,7 @@ label_indies = pd.read_csv('./data/gravity_spy_labels.csv', index_col=0, header=
 iic_pred_labels = pd.read_csv('./data/sc_pred_labels.csv', index_col=0, header=None)
 z_autoencoder = pd.read_csv('./data/z-autoencoder-outputs.csv', index_col=0)
 
-z_umap = umap.UMAP(n_components=3, n_neighbors=15, min_dist=0.5, random_state=random_state).fit_transform(z_autoencoder)
+z_umap = umap.UMAP(n_components=3, n_neighbors=umap_neighbor, min_dist=umap_min_dist, random_state=random_state).fit_transform(z_autoencoder)
 
 col_name = ['umap-component-1', 'umap-component-2', 'umap-component-3']
 # 3d scatterの引数に対応したpdDataFrameに格納
@@ -41,7 +45,7 @@ df = pd.DataFrame(z_umap, index=z_autoencoder.index, columns=col_name)
 # [328, 232, 58, 1869, 66, 454, 279, 830, 573, 657, 453, 181, 88, 27, 453, 285, 459, 354, 116, 472, 44, 305]
 each_label_data_num = z_autoencoder.index.value_counts(sort=False).values.tolist() # sortすると降順になってしまう
 
-sc = SpectralClustering(n_clusters=26, random_state=random_state, assign_labels="kmeans", affinity="nearest_neighbors", n_neighbors=7).fit(z_umap)
+sc = SpectralClustering(n_clusters=nclass, random_state=random_state, assign_labels="kmeans").fit(z_umap)
 
 # default表示
 fig = px.scatter_3d(df, x=col_name[0], y=col_name[1], z=col_name[2], color=df.index)
@@ -63,12 +67,27 @@ app.layout = html.Div([
     html.Div(id="output"),
 ])
 
+# 現在のカメラの状態を格納するグローバル変数
+current_camera = None
+
+# カメラの状態を更新する関数
+def update_camera(camera):
+    global current_camera
+    current_camera = camera
+
 # Define the new callback triggered by the button
 @app.callback(
     Output('image', 'figure'),  # Output is the figure of the dcc.Graph component
     Input('color-toggle', 'value'),  # Input is the number of times the button is clicked
+    Input('image', 'relayoutData')  # Input is the relayoutData of the dcc.Graph component
 )
-def switch_color(value):
+def switch_color(value, relayout_data):
+    global current_camera
+
+    # カメラの状態が更新された場合
+    if relayout_data and 'scene.camera' in relayout_data:
+        update_camera(relayout_data['scene.camera'])
+
     if 'index' in value:
         # If the toggle button is checked, switch the color parameter to sc.labels_
         new_fig = px.scatter_3d(df, x=col_name[0], y=col_name[1], z=col_name[2], color=sc.labels_)
@@ -84,6 +103,10 @@ def switch_color(value):
         font=dict(size=18),
         legend=dict(font=dict(size=20))
     )
+
+    # 現在のカメラの状態を新しいフィギュアに適用
+    if current_camera:
+       new_fig.update_layout(scene_camera=current_camera)
 
     return new_fig
 
