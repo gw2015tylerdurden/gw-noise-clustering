@@ -10,6 +10,7 @@ from dash import dcc, html
 from dash.dependencies import Input, Output
 from PIL import Image
 from sklearn.cluster import SpectralClustering
+from scipy.spatial.distance import pdist
 
 def numpyTob64FmtPng(array):
     im_pil = Image.fromarray(array)
@@ -23,10 +24,10 @@ def getGravitySpyDatasetIndex(hoverData):
     num = hoverData['points'][0]['pointNumber']
     return sum(each_label_data_num[:label]) + num
 
-random_state = 256
+random_state = 123
 nclass = 17
-umap_neighbor = 15
-umap_min_dist = 0.5
+umap_neighbor = 10
+umap_min_dist = 0.3
 
 
 # datasetをpdDataFrameに格納
@@ -45,7 +46,11 @@ df = pd.DataFrame(z_umap, index=z_autoencoder.index, columns=col_name)
 # [328, 232, 58, 1869, 66, 454, 279, 830, 573, 657, 453, 181, 88, 27, 453, 285, 459, 354, 116, 472, 44, 305]
 each_label_data_num = z_autoencoder.index.value_counts(sort=False).values.tolist() # sortすると降順になってしまう
 
-sc = SpectralClustering(n_clusters=nclass, random_state=random_state, assign_labels="kmeans").fit(z_umap)
+
+gamma = 2.0 / np.median(pdist(z_umap)) ** 2
+sc = SpectralClustering(n_clusters=nclass, random_state=random_state, assign_labels="kmeans", gamma=gamma).fit(z_umap)
+labels_df = pd.DataFrame(sc.labels_, columns=['sc_labels'])
+labels_df['gravity_spy_labels'] = z_autoencoder.index
 
 # default表示
 fig = px.scatter_3d(df, x=col_name[0], y=col_name[1], z=col_name[2], color=df.index)
@@ -90,11 +95,10 @@ def switch_color(value, relayout_data):
 
     if 'index' in value:
         # If the toggle button is checked, switch the color parameter to sc.labels_
-        new_fig = px.scatter_3d(df, x=col_name[0], y=col_name[1], z=col_name[2], color=sc.labels_)
-
+        new_fig = px.scatter_3d(df, x=col_name[0], y=col_name[1], z=col_name[2], color=labels_df['sc_labels'], hover_name=labels_df['gravity_spy_labels'], color_continuous_scale=px.colors.sequential.Viridis)
     else:
         # If the toggle button is unchecked, switch the color parameter back to df.index
-        new_fig = px.scatter_3d(df, x=col_name[0], y=col_name[1], z=col_name[2], color=df.index)
+        new_fig = px.scatter_3d(df, x=col_name[0], y=col_name[1], z=col_name[2], color=df.index, hover_name=labels_df['gravity_spy_labels'])
 
 
     new_fig.update_traces(marker_size=1, mode='markers', marker=dict(showscale=False))
