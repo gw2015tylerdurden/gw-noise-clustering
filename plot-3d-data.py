@@ -19,14 +19,6 @@ def numpyTob64FmtPng(array):
     im_b64 = base64.b64encode(buff.getvalue()).decode("utf-8")
     return im_b64
 
-def getGravitySpyDatasetIndex(hoverData, is_plot_sc=False):
-    label = hoverData['points'][0]['curveNumber']
-    num = hoverData['points'][0]['pointNumber']
-    if is_plot_sc:
-        return sum(each_sc_label_data_num[:label]) + num
-    else:
-        return sum(each_label_data_num[:label]) + num
-
 random_state = 123
 nclass = 23
 umap_min_dist = 0.4
@@ -37,7 +29,7 @@ is_selftuning = True
 # nclass = 17
 # umap_min_dist = 0.2
 # umap_neighbor = 15
-# is_selftuning = False
+# is_selftuning = False  # median heuristics
 
 # datasetをpdDataFrameに格納
 dataset_path = './data/trainingset.h5'
@@ -50,7 +42,6 @@ z_umap = umap.UMAP(n_components=3, n_neighbors=umap_neighbor, min_dist=umap_min_
 col_name = ['umap-component-1', 'umap-component-2', 'umap-component-3']
 # 3d scatterの引数に対応したpdDataFrameに格納
 df = pd.DataFrame(z_umap, index=z_autoencoder.index, columns=col_name)
-
 
 
 if is_selftuning:
@@ -68,7 +59,6 @@ sc_labels = pd.DataFrame(sc.labels_, columns=['sc_labels'])
 sc_labels.to_csv(filename)
 
 df['customdata'] = list(range(len(df.index)))
-sc_labels['customdata'] = list(range(len(df.index)))
 
 # default表示
 fig = px.scatter_3d(df, x=col_name[0], y=col_name[1], z=col_name[2], color=df.index, hover_data=['customdata'])
@@ -114,7 +104,7 @@ def switch_color(value, relayout_data):
     if 'index' in value:
         # If the toggle button is checked, switch the color parameter to sc.labels_
         #new_fig = px.scatter_3d(df, x=col_name[0], y=col_name[1], z=col_name[2], color=sc_labels['sc_labels'], hover_name=z_autoencoder.index)
-        new_fig = px.scatter_3d(df, x=col_name[0], y=col_name[1], z=col_name[2], color=sc_labels['sc_labels'].astype(str), hover_name=z_autoencoder.index, hover_data=['customdata'])
+        new_fig = px.scatter_3d(df, x=col_name[0], y=col_name[1], z=col_name[2], color=sc_labels['sc_labels'].astype(str), hover_name=z_autoencoder.index, color_discrete_sequence=px.colors.sequential.Viridis, hover_data=['customdata'])
     else:
         # If the toggle button is unchecked, switch the color parameter back to df.index
         new_fig = px.scatter_3d(df, x=col_name[0], y=col_name[1], z=col_name[2], color=df.index, hover_name=z_autoencoder.index, hover_data=['customdata'])
