@@ -4,7 +4,7 @@ import pandas as pd
 from .utils import calc_selfturining_affinity, calc_classification_error
 from sklearn.cluster import KMeans, SpectralClustering
 from scipy.spatial.distance import pdist, squareform
-
+from sklearn.neighbors import KNeighborsClassifier
 
 class SpeccClusteringInstability:
     def __init__(self, gamma):
@@ -13,9 +13,9 @@ class SpeccClusteringInstability:
 
         if isinstance(gamma, float):
             self.gamma = gamma
-        elif gamma == 'median-heuristic':
+        elif gamma == 'median_heuristic':
             self.is_median_heuristic = True
-        elif gamma.startswith('self-turning-neighbor'):
+        elif gamma.startswith('self_turning_neighbor'):
             self.self_turning_neighbor = int(gamma.split(':')[1])
             self.is_self_turining = True
         else:
@@ -29,7 +29,7 @@ class SpeccClusteringInstability:
             dmat2 = data.iloc[d2, :]
             return dmat1, d1, dmat2, d2
 
-    def __classifnp(self, data, clustering, method='centroid', cdist=None, centroids=None, nnk=1):
+    def __classifnp(self, data, clustering, method='knn', cdist=None, centroids=None, nnk=15):
         data = np.array(data)
         clustering = np.array(clustering)
         k = np.max(clustering) + 1  # max clustering label
@@ -54,6 +54,11 @@ class SpeccClusteringInstability:
             clpred = np.nanargmin(prmatrix, axis=1)
             predicted_clustering[topredict] = clpred
 
+        if method == 'knn':
+            knn = KNeighborsClassifier(n_neighbors=nnk)
+            knn.fit(data[~topredict, :], clustering[~topredict])
+            clustering[topredict] = knn.predict(data[topredict, :])
+
         #### Kmeans, PAM, specc, ...
 
         return predicted_clustering
@@ -62,7 +67,7 @@ class SpeccClusteringInstability:
     def nselectboot(self, data, B=50, distances=None, clustermethod="kmeans",
                     classification="averagedist", centroidname=None,
                     krange=range(2, 10), count=False,
-                    nnk=1, largeisgood=False, **kargs):
+                    nnk=15, largeisgood=False, **kargs):
 
         if clustermethod == 'kmeans':
             model = KMeans
@@ -116,8 +121,8 @@ class SpeccClusteringInstability:
                 cj1[d1] = clm1.labels_
                 cj2[d2] = clm2.labels_
 
-                cj1 = self.__classifnp(data, cj1, method=classification, centroids=None, nnk=nnk)
-                cj2 = self.__classifnp(data, cj2, method=classification, centroids=None, nnk=nnk)
+                cj1 = self.__classifnp(data, cj1, method=classification, centroids='knn', nnk=nnk)
+                cj2 = self.__classifnp(data, cj2, method=classification, centroids='knn', nnk=nnk)
 
                 ctable = np.array(pd.crosstab(cj1, cj2))
                 nck1 = ctable.sum(axis=1)

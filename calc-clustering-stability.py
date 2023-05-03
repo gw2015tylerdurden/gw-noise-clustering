@@ -44,7 +44,7 @@ def main(args):
                        random_state=args.random_state).fit_transform(z_autoencoder)
 
     cs = fpc.SpeccClusteringInstability(args.sc.gamma)
-    ret = cs.nselectboot(z_umap, B=args.bootstrap_num, krange=range(args.sc.n_start, args.sc.n_end), clustermethod="specc", count=True)
+    ret = cs.nselectboot(z_umap, B=args.bootstrap_num, krange=range(args.sc.n_start, args.sc.n_end), clustermethod="specc", count=True, nnk=args.clustering_stability_nnk)
     error_rate = cs.get_error_rate(z_umap, gravity_spy_labels, krange=range(args.sc.n_start, args.sc.n_end), seed=args.random_state)
 
     idx = 0
