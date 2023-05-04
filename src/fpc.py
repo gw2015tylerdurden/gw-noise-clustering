@@ -55,9 +55,8 @@ class SpeccClusteringInstability:
             predicted_clustering[topredict] = clpred
 
         if method == 'knn':
-            knn = KNeighborsClassifier(n_neighbors=nnk)
-            knn.fit(data[~topredict, :], clustering[~topredict])
-            clustering[topredict] = knn.predict(data[topredict, :])
+            knn = KNeighborsClassifier(n_neighbors=nnk).fit(data[~topredict, :], clustering[~topredict])
+            predicted_clustering[topredict] = knn.predict(data[topredict, :])
 
         #### Kmeans, PAM, specc, ...
 
