@@ -14,6 +14,8 @@ gravity_spy_labels = ['1080Lines', '1400Ripples', 'Air_Compressor', 'Blip',
          'Wandering_Line', 'Whistle']
 
 
+plt.rcParams['font.size'] = 18
+
 def plot_confusion_matrix(true_y, pred_y):
     true_y, _ = pd.factorize(true_y.iloc[:, 0])
     pred_y = pred_y.iloc[:, 0]
@@ -24,12 +26,12 @@ def plot_confusion_matrix(true_y, pred_y):
         labels = true_class_num
         cm = cm_squared[:, :pred_class_num]
         cmap = 'Blues'
-        ax_xlabel = "Unsupervised Labels - median-heuristic"
+        ax_xlabel = "Spectral Clustering Labels (median-heuristic)"
     else:
         labels = pred_class_num
         cm = cm_squared[:true_class_num, :]
         cmap = 'Greens'
-        ax_xlabel = "Unsupervised Labels - selfturning"
+        ax_xlabel = "Spectral Clustering Labels (selfturning)"
 
     cmn = normalize(cm, norm='l1', axis=0)
 
@@ -56,10 +58,10 @@ def plot_confusion_matrix(true_y, pred_y):
         #square=True,
     )
     ax.set_xlabel(ax_xlabel)
-    ax.set_ylabel(r"Supervised Labels")
+    ax.set_ylabel(r"Gravity Spy Labels")
 
     plt.tight_layout()
-    plt.savefig("cm_sc.svg", transparent=True, dpi=300)
+    plt.savefig("cm_median.svg", transparent=True, dpi=300)
     plt.show()
     plt.close()
 

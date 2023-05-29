@@ -23,13 +23,14 @@ umap:
 sc:
   n_start: 10
   n_end: 35
-  gamma: self-turning-neighbor:7
+  gamma: self_turning_neighbor:15
   # gamma: median-heuristic
 
 bootstrap_num: 50
+clustering_stability_nnk: 15
 
 wandb:
   project: gw-noise-clustering
-  group: feat-sc-gamma-cs
+  group: feat-cs-knn
   name: clustering-stability
   cwd: current_work_directory
